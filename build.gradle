@@ -1,0 +1,76 @@
+plugins {
+    id "java-library"
+    id "com.diffplug.spotless" version "5.3.0"
+    id "com.github.ben-manes.versions" version "0.29.0"
+}
+
+group "com.github.michaelruocco"
+version "1.0.0-SNAPSHOT"
+
+repositories {
+    mavenCentral()
+}
+
+ext {
+    slf4jVersion = "1.7.30"
+    lombokVersion = "1.18.12"
+
+    junitVersion = "5.6.2"
+    assertjVersion = "3.17.1"
+}
+
+dependencies {
+    compileOnly "org.projectlombok:lombok:${lombokVersion}"
+    annotationProcessor "org.projectlombok:lombok:${lombokVersion}"
+    testCompileOnly "org.projectlombok:lombok:${lombokVersion}"
+    testAnnotationProcessor "org.projectlombok:lombok:${lombokVersion}"
+
+    implementation "org.slf4j:slf4j-api:${slf4jVersion}"
+    implementation "com.googlecode.libphonenumber:libphonenumber:8.12.8"
+
+    testImplementation "org.junit.jupiter:junit-jupiter-api:${junitVersion}"
+    testImplementation "org.junit.jupiter:junit-jupiter-engine:${junitVersion}"
+    testImplementation "org.assertj:assertj-core:${assertjVersion}"
+    testImplementation "org.slf4j:slf4j-simple:${slf4jVersion}"
+}
+
+tasks.withType(Test) {
+    useJUnitPlatform()
+    systemProperty "org.slf4j.simpleLogger.defaultLogLevel", "debug"
+    testLogging {
+        events "failed"
+        exceptionFormat "full"
+        showStandardStreams true
+    }
+}
+
+spotless {
+    java {
+        removeUnusedImports()
+        trimTrailingWhitespace()
+        indentWithSpaces(4)
+        endWithNewline()
+
+        replace 'Not enough space after if', 'if(', 'if ('
+        replaceRegex 'Too much space after if', 'if +\\(', 'if ('
+
+        replace 'Not enough space after for', 'for(', 'for ('
+        replaceRegex 'Too much space after for', 'for +\\(', 'for ('
+
+        replace 'Not enough space after while', 'while(', 'while ('
+        replaceRegex 'Too much space after while', 'while +\\(', 'while ('
+    }
+}
+
+dependencyUpdates.resolutionStrategy {
+    componentSelection { rules ->
+        rules.all { ComponentSelection selection ->
+            boolean rejected = ["alpha", "beta", "rc", "cr", "m", "preview"].any { qualifier ->
+                selection.candidate.version ==~ /(?i).*[.-]${qualifier}[.\d-]*/
+            }
+            if (rejected) {
+                selection.reject("Release candidate")
+            }
+        }
+    }
+}
