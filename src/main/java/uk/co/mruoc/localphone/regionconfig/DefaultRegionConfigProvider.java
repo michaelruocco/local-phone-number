@@ -5,14 +5,14 @@ import lombok.extern.slf4j.Slf4j;
 
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.HashMap;
+import java.util.EnumMap;
 import java.util.Map;
 import java.util.Optional;
 
 @Slf4j
 public class DefaultRegionConfigProvider implements RegionConfigProvider {
 
-    private final Map<CountryCode, RegionConfig> mappings = new HashMap<>();
+    private final Map<CountryCode, RegionConfig> mappings = new EnumMap<>(CountryCode.class);
 
     public DefaultRegionConfigProvider() {
         this(buildDefaultMappings());
