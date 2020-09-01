@@ -67,7 +67,10 @@ public abstract class AbstractRegionConfig implements RegionConfig {
     }
 
     private boolean isMobile(PhoneNumber number) {
-        return getMobileTypes().contains(UTIL.getNumberType(number));
+        PhoneNumberType type = UTIL.getNumberType(number);
+        boolean mobile = getMobileTypes().contains(type);
+        log.debug("number {} has type {} is mobile: {}", number, type, mobile);
+        return mobile;
     }
 
     private String format(PhoneNumber number) {
