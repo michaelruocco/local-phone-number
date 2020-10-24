@@ -33,7 +33,7 @@ config will treat these a mobile numbers, but this can be modified base on requi
 
 ```gradle
 // formats code, builds code, runs tests
-./gradlew clean build
+./gradlew clean spotlessApply build
 ```
 
 ```gradle
