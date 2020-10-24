@@ -9,6 +9,7 @@
 [![Coverage](https://sonarcloud.io/api/project_badges/measure?project=michaelruocco_local-phone-number&metric=coverage)](https://sonarcloud.io/dashboard?id=michaelruocco_local-phone-number)
 [![Lines of Code](https://sonarcloud.io/api/project_badges/measure?project=michaelruocco_local-phone-number&metric=ncloc)](https://sonarcloud.io/dashboard?id=michaelruocco_local-phone-number)
 [![Download](https://api.bintray.com/packages/michaelruocco/maven/local-phone-number/images/download.svg)](https://bintray.com/michaelruocco/maven/local-phone-number/_latestVersion)
+[![Maven Central](https://img.shields.io/maven-central/v/com.github.michaelruocco/local-phone-number.svg?label=Maven%20Central)](https://search.maven.org/search?q=g:%22com.github.michaelruocco%22%20AND%20a:%22local-phone-number%22)
 
 ## Overview
 
