@@ -146,6 +146,8 @@ publishing {
     publications {
         lib(MavenPublication) {
             from components.java
+            suppressPomMetadataWarningsFor("testFixturesApiElements")
+            suppressPomMetadataWarningsFor("testFixturesRuntimeElements")
             pom.withXml {
                 def root = asNode()
                 root.appendNode("description", "Library to determine if phone number is local to default region")
