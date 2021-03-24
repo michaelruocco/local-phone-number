@@ -5,8 +5,10 @@ import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
 import static com.neovisionaries.i18n.CountryCode.CH;
+import static com.neovisionaries.i18n.CountryCode.DE;
 import static com.neovisionaries.i18n.CountryCode.GB;
 import static com.neovisionaries.i18n.CountryCode.GG;
+import static com.neovisionaries.i18n.CountryCode.IN;
 import static com.neovisionaries.i18n.CountryCode.RU;
 import static com.neovisionaries.i18n.CountryCode.US;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -14,45 +16,74 @@ import static org.assertj.core.api.Assertions.assertThat;
 @DisplayName("Local number calculator tests")
 public class LocalNumberCalculatorTest {
 
+    private static final String GUERNSEY_NUMBER = "01481 960 194";
+    private static final String SWISS_NUMBER = "41 22 343 80 14";
+    private static final String GERMAN_NUMBER = "491762260312";
+    private static final String INDIAN_NUMBER = "917503907302";
+
     private final LocalNumberCalculator calculator = new LocalNumberCalculator();
+
+    private static String prefixPlus(String number) {
+        return String.format("+%s", number);
+    }
 
     @Nested
     @DisplayName("GB local number tests")
     class GbLocalNumberTests {
 
         @Test
-        void shouldReturnGuernseyNumberIsLocal() {
-            String guernseyNumber = "07911 123456";
-
-            LocalPhoneNumber number = calculator.toLocalPhoneNumber(guernseyNumber, GB);
+        void shouldReturnGuernseyNumberIfLocal() {
+            LocalPhoneNumber number = calculator.toLocalPhoneNumber(GUERNSEY_NUMBER, GB);
 
             assertThat(number.getDefaultRegion()).isEqualTo(GB);
             assertThat(number.getLocalRegion()).contains(GG);
             assertThat(number.isLocal()).isTrue();
+            assertThat(number.getRawValue()).isEqualTo(GUERNSEY_NUMBER);
+            assertThat(number.getFormattedValue()).isEqualTo("+441481960194");
         }
 
         @Test
-        void shouldReturnSwissNumberIsNotLocal() {
-            String swissNumber = "044 668 18 00";
-
-            LocalPhoneNumber number = calculator.toLocalPhoneNumber(swissNumber, GB);
+        void shouldReturnSwissNumberIfNotLocal() {
+            LocalPhoneNumber number = calculator.toLocalPhoneNumber(SWISS_NUMBER, GB);
 
             assertThat(number.getDefaultRegion()).isEqualTo(GB);
             assertThat(number.getLocalRegion()).isEmpty();
             assertThat(number.isLocal()).isFalse();
+            assertThat(number.getRawValue()).isEqualTo(SWISS_NUMBER);
+            assertThat(number.getFormattedValue()).isEqualTo("+41223438014");
+        }
+
+        @Test
+        void shouldReturnGermanNumberIfNotLocal() {
+            LocalPhoneNumber number = calculator.toLocalPhoneNumber(GERMAN_NUMBER, GB);
+
+            assertThat(number.getDefaultRegion()).isEqualTo(GB);
+            assertThat(number.getLocalRegion()).isEmpty();
+            assertThat(number.isLocal()).isFalse();
+            assertThat(number.getRawValue()).isEqualTo(GERMAN_NUMBER);
+            assertThat(number.getFormattedValue()).isEqualTo("+491762260312");
+        }
+
+        @Test
+        void shouldReturnIndianNumberIfNotLocal() {
+            LocalPhoneNumber number = calculator.toLocalPhoneNumber(INDIAN_NUMBER, GB);
+
+            assertThat(number.getDefaultRegion()).isEqualTo(GB);
+            assertThat(number.getLocalRegion()).isEmpty();
+            assertThat(number.isLocal()).isFalse();
+            assertThat(number.getRawValue()).isEqualTo(INDIAN_NUMBER);
+            assertThat(number.getFormattedValue()).isEqualTo("+917503907302");
         }
 
     }
 
     @Nested
-    @DisplayName("CH local number tests")
-    class ChLocalNumberTests {
+    @DisplayName("Swiss local number tests")
+    class SwissLocalNumberTests {
 
         @Test
         void shouldReturnSwissNumberIsLocal() {
-            String swissNumber = "044 668 18 00";
-
-            LocalPhoneNumber number = calculator.toLocalPhoneNumber(swissNumber, CH);
+            LocalPhoneNumber number = calculator.toLocalPhoneNumber(SWISS_NUMBER, CH);
 
             assertThat(number.getDefaultRegion()).isEqualTo(CH);
             assertThat(number.getLocalRegion()).contains(CH);
@@ -61,9 +92,7 @@ public class LocalNumberCalculatorTest {
 
         @Test
         void shouldReturnGuernseyNumberIsNotLocal() {
-            String guernseyNumber = "07911 123456";
-
-            LocalPhoneNumber number = calculator.toLocalPhoneNumber(guernseyNumber, CH);
+            LocalPhoneNumber number = calculator.toLocalPhoneNumber(GUERNSEY_NUMBER, CH);
 
             assertThat(number.getDefaultRegion()).isEqualTo(CH);
             assertThat(number.getLocalRegion()).isEmpty();
@@ -73,11 +102,11 @@ public class LocalNumberCalculatorTest {
     }
 
     @Nested
-    @DisplayName("RU local number tests")
-    class RuLocalNumberTests {
+    @DisplayName("Russian local number tests")
+    class RussianLocalNumberTests {
 
         @Test
-        void shouldReturnRussianNumberIsLocal() {
+        void shouldReturnRussianNumberIfLocal() {
             String russianNumber = "495 123 4567";
 
             LocalPhoneNumber number = calculator.toLocalPhoneNumber(russianNumber, RU);
@@ -88,10 +117,8 @@ public class LocalNumberCalculatorTest {
         }
 
         @Test
-        void shouldReturnGuernseyNumberIsNotLocal() {
-            String guernseyNumber = "07911 123456";
-
-            LocalPhoneNumber number = calculator.toLocalPhoneNumber(guernseyNumber, RU);
+        void shouldReturnGuernseyNumberIfNotLocal() {
+            LocalPhoneNumber number = calculator.toLocalPhoneNumber(GUERNSEY_NUMBER, RU);
 
             assertThat(number.getDefaultRegion()).isEqualTo(RU);
             assertThat(number.getLocalRegion()).isEmpty();
@@ -105,7 +132,7 @@ public class LocalNumberCalculatorTest {
     class UsLocalNumberTests {
 
         @Test
-        void shouldReturnUsNumberIsLocal() {
+        void shouldReturnUsNumberIfLocal() {
             String usNumber = "1-541-754-3010";
 
             LocalPhoneNumber number = calculator.toLocalPhoneNumber(usNumber, US);
@@ -116,12 +143,34 @@ public class LocalNumberCalculatorTest {
         }
 
         @Test
-        void shouldReturnGuernseyNumberIsNotLocal() {
-            String guernseyNumber = "07911 123456";
-
-            LocalPhoneNumber number = calculator.toLocalPhoneNumber(guernseyNumber, US);
+        void shouldReturnGuernseyNumberIfNotLocal() {
+            LocalPhoneNumber number = calculator.toLocalPhoneNumber(GUERNSEY_NUMBER, US);
 
             assertThat(number.getDefaultRegion()).isEqualTo(US);
+            assertThat(number.getLocalRegion()).isEmpty();
+            assertThat(number.isLocal()).isFalse();
+        }
+
+    }
+
+    @Nested
+    @DisplayName("German local number tests")
+    class GermanLocalNumberTests {
+
+        @Test
+        void shouldReturnGermanNumberIfLocal() {
+            LocalPhoneNumber number = calculator.toLocalPhoneNumber(GERMAN_NUMBER, DE);
+
+            assertThat(number.getDefaultRegion()).isEqualTo(DE);
+            assertThat(number.getLocalRegion()).contains(DE);
+            assertThat(number.isLocal()).isTrue();
+        }
+
+        @Test
+        void shouldReturnGuernseyNumberIfNotLocal() {
+            LocalPhoneNumber number = calculator.toLocalPhoneNumber(GUERNSEY_NUMBER, DE);
+
+            assertThat(number.getDefaultRegion()).isEqualTo(DE);
             assertThat(number.getLocalRegion()).isEmpty();
             assertThat(number.isLocal()).isFalse();
         }
@@ -133,13 +182,62 @@ public class LocalNumberCalculatorTest {
     class FormattedValueTests {
 
         @Test
-        void shouldReturnRawAndFormattedValue() {
-            String rawNumber = "07911 123456";
+        void shouldReturnRawAndFormattedValueIfNumberIsLocalToGb() {
+            String gbNumber = "441694429025";
 
-            LocalPhoneNumber number = calculator.toLocalPhoneNumber(rawNumber, GB);
+            LocalPhoneNumber number = calculator.toLocalPhoneNumber(gbNumber, GB);
 
-            assertThat(number.getRawValue()).isEqualTo(rawNumber);
-            assertThat(number.getFormattedValue()).isEqualTo("+447911123456");
+            assertThat(number.getRawValue()).isEqualTo(gbNumber);
+            assertThat(number.getFormattedValue()).isEqualTo("+441694429025");
+        }
+
+        @Test
+        void shouldReturnRawAndFormattedValueIfNumberIsLocalToGuernsey() {
+            LocalPhoneNumber number = calculator.toLocalPhoneNumber(GUERNSEY_NUMBER, GB);
+
+            assertThat(number.getRawValue()).isEqualTo(GUERNSEY_NUMBER);
+            assertThat(number.getFormattedValue()).isEqualTo("+441481960194");
+        }
+
+        @Test
+        void shouldReturnRawAndFormattedValueIfNumberIsLocalToGermany() {
+            LocalPhoneNumber number = calculator.toLocalPhoneNumber(GERMAN_NUMBER, DE);
+
+            assertThat(number.getRawValue()).isEqualTo(GERMAN_NUMBER);
+            assertThat(number.getFormattedValue()).isEqualTo("+491762260312");
+        }
+
+        @Test
+        void shouldReturnRawAndFormattedValueIfNumberIsLocalToIndia() {
+            String indianNumber = "917503907302";
+            LocalPhoneNumber number = calculator.toLocalPhoneNumber(indianNumber, IN);
+
+            assertThat(number.getRawValue()).isEqualTo(indianNumber);
+            assertThat(number.getFormattedValue()).isEqualTo("+917503907302");
+        }
+
+        @Test
+        void shouldReturnRawValueAsFormattedValueForIndianInternationalNumberFromUkSinceWeCantGuessTheCountryCode() {
+            LocalPhoneNumber number = calculator.toLocalPhoneNumber(INDIAN_NUMBER, GB);
+
+            assertThat(number.getRawValue()).isEqualTo(INDIAN_NUMBER);
+            assertThat(number.getFormattedValue()).isEqualTo(prefixPlus(INDIAN_NUMBER));
+        }
+
+        @Test
+        void shouldReturnRawAndFormattedValueIfNumberIsLocalToSwitzerland() {
+            LocalPhoneNumber number = calculator.toLocalPhoneNumber(SWISS_NUMBER, CH);
+
+            assertThat(number.getRawValue()).isEqualTo(SWISS_NUMBER);
+            assertThat(number.getFormattedValue()).isEqualTo("+41223438014");
+        }
+
+        @Test
+        void shouldReturnRawValueAsFormattedValueForGermanInternationalNumberFromUkSinceWeCantGuessTheCountryCode() {
+            LocalPhoneNumber number = calculator.toLocalPhoneNumber(GERMAN_NUMBER, GB);
+
+            assertThat(number.getRawValue()).isEqualTo(GERMAN_NUMBER);
+            assertThat(number.getFormattedValue()).isEqualTo(prefixPlus(GERMAN_NUMBER));
         }
 
     }
@@ -167,7 +265,5 @@ public class LocalNumberCalculatorTest {
         }
 
     }
-
-
 
 }
