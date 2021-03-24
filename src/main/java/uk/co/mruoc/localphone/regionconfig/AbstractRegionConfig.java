@@ -21,16 +21,12 @@ public abstract class AbstractRegionConfig implements RegionConfig {
 
     @Override
     public LocalPhoneNumber toLocal(String rawNumber) {
-        PhoneNumber parsedNumber = parse(rawNumber);
+        PhoneNumber parsedNumber = tryParse(rawNumber);
         Optional<CountryCode> localRegion = toLocalRegion(parsedNumber);
-        return DefaultLocalPhoneNumber.builder()
-                .defaultRegion(getParent())
-                .region(localRegion.orElse(null))
-                .raw(rawNumber)
-                .formatted(format(parsedNumber))
-                .local(localRegion.isPresent())
-                .mobile(isMobile(parsedNumber))
-                .build();
+        if (localRegion.isPresent()) {
+            return toLocalNumber(parsedNumber, localRegion.get());
+        }
+        return toInternationalNumber(parsedNumber);
     }
 
     protected Collection<PhoneNumberType> getMobileTypes() {
@@ -41,12 +37,41 @@ public abstract class AbstractRegionConfig implements RegionConfig {
         return PhoneNumberFormat.E164;
     }
 
-    private PhoneNumber parse(String number) {
+    private PhoneNumber tryParse(String number) {
+        String region = getParentRegionAlpha2();
+        PhoneNumber originalParsed = parse(number, region);
+        if (isValid(originalParsed)) {
+            return originalParsed;
+        }
+        return prefixPlusAndParse(number, region).orElse(originalParsed);
+    }
+
+    private PhoneNumber parse(String number, String region) {
         try {
-            return UTIL.parse(number, getParent().getAlpha2());
+            return UTIL.parseAndKeepRawInput(number, region);
         } catch (NumberParseException e) {
             throw new PhoneNumberParseFailedException(e);
         }
+    }
+
+    private Optional<PhoneNumber> prefixPlusAndParse(String number, String region) {
+        try {
+            String prefixed = prefixPlus(number);
+            PhoneNumber phoneNumber = UTIL.parseAndKeepRawInput(prefixed, region);
+            phoneNumber.setRawInput(number);
+            return Optional.of(phoneNumber);
+        } catch (NumberParseException e) {
+            log.error(e.getMessage(), e);
+            return Optional.empty();
+        }
+    }
+
+    private String getParentRegionAlpha2() {
+        return getParent().getAlpha2();
+    }
+
+    private String prefixPlus(String number) {
+        return String.format("+%s", number);
     }
 
     private Optional<CountryCode> toLocalRegion(PhoneNumber number) {
@@ -57,13 +82,26 @@ public abstract class AbstractRegionConfig implements RegionConfig {
                 .orElse(Optional.empty());
     }
 
-    private static Optional<CountryCode> toLocalRegion(CountryCode country, PhoneNumber number) {
-        boolean valid = UTIL.isValidNumberForRegion(number, country.getAlpha2());
-        log.debug("number {} valid for country {}: {}", number, country, valid);
-        if (valid) {
-            return Optional.of(country);
-        }
-        return Optional.empty();
+    private LocalPhoneNumber toLocalNumber(PhoneNumber parsedNumber, CountryCode localRegion) {
+        return DefaultLocalPhoneNumber.builder()
+                .defaultRegion(getParent())
+                .raw(parsedNumber.getRawInput())
+                .formatted(format(parsedNumber))
+                .mobile(isMobile(parsedNumber))
+                .region(localRegion)
+                .local(true)
+                .build();
+    }
+
+    private LocalPhoneNumber toInternationalNumber(PhoneNumber parsedNumber) {
+        log.debug("using raw input {} as formatted number because we have an international number and cannot guess the country code", parsedNumber.getRawInput());
+        return DefaultLocalPhoneNumber.builder()
+                .defaultRegion(getParent())
+                .raw(parsedNumber.getRawInput())
+                .formatted(format(parsedNumber))
+                .mobile(isMobile(parsedNumber))
+                .local(false)
+                .build();
     }
 
     private boolean isMobile(PhoneNumber number) {
@@ -75,6 +113,36 @@ public abstract class AbstractRegionConfig implements RegionConfig {
 
     private String format(PhoneNumber number) {
         return UTIL.format(number, getFormat());
+    }
+
+    private static Optional<CountryCode> toLocalRegion(CountryCode country, PhoneNumber number) {
+        boolean valid = UTIL.isValidNumberForRegion(number, country.getAlpha2());
+        log.debug("number {} valid for country {}: {}", number, country, valid);
+        if (valid) {
+            return Optional.of(country);
+        }
+        return Optional.empty();
+    }
+
+    private static boolean isValid(PhoneNumber phoneNumber) {
+        return doesNotHaveDuplicatedGermanCountryCodePrefix(phoneNumber) &&
+                UTIL.isValidNumber(phoneNumber);
+    }
+
+    //The need for this check is explained here:
+    //https://github.com/google/libphonenumber/blob/master/FAQ.md#why-wasnt-the-country-code-removed-when-parsing
+    private static boolean doesNotHaveDuplicatedGermanCountryCodePrefix(PhoneNumber phoneNumber) {
+        int countryCode = phoneNumber.getCountryCode();
+        if (!isGermanNumber(countryCode)) {
+            return true;
+        }
+        String nationalNumber = Long.toString(phoneNumber.getNationalNumber());
+        log.debug("national number {} country code {}", nationalNumber, countryCode);
+        return !nationalNumber.startsWith(Integer.toString(countryCode));
+    }
+
+    private static boolean isGermanNumber(int countryCode) {
+        return countryCode == 49;
     }
 
 }
